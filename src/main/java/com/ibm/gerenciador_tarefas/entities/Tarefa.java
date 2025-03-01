@@ -4,7 +4,6 @@ import com.ibm.gerenciador_tarefas.dtos.StatusTarefa;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
-import java.util.Objects;
 
 @Entity
 public class Tarefa {
@@ -18,6 +17,7 @@ public class Tarefa {
     @Column(nullable = false)
     private LocalDate dataInicio;
 
+    @Column(nullable = false)
     private LocalDate dataFim;
 
     @Enumerated(EnumType.STRING)
