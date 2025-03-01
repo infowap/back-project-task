@@ -9,15 +9,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/tarefas")
 @CrossOrigin(origins = "http://localhost:8080")
 public class TarefaController {
+
     private final TarefaService tarefaService;
 
     public TarefaController(TarefaService tarefaService) {
@@ -41,8 +44,7 @@ public class TarefaController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor.")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<TarefaResponseDTO> buscarPorId(
-            @Parameter(description = "ID da tarefa a ser buscada.") @PathVariable Long id) {
+    public ResponseEntity<TarefaResponseDTO> buscarPorId(@Parameter(description = "ID da tarefa a ser buscada.") @PathVariable Long id) {
         return ResponseEntity.ok(tarefaService.buscarPorId(id));
     }
 
@@ -53,21 +55,21 @@ public class TarefaController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor.")
     })
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<TarefaResponseDTO>> listarPorStatus(
-            @Parameter(description = "Status da tarefa.") @PathVariable StatusTarefa status) {
+    public ResponseEntity<List<TarefaResponseDTO>> listarPorStatus(@Parameter(description = "Status da tarefa.") @PathVariable StatusTarefa status) {
         return ResponseEntity.ok(tarefaService.listarPorStatus(status));
     }
 
     @Operation(summary = "Criar uma nova tarefa", description = "Cria uma nova tarefa no sistema.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tarefa criada com sucesso."),
+            @ApiResponse(responseCode = "201", description = "Tarefa criada com sucesso."),
             @ApiResponse(responseCode = "400", description = "Dados inválidos para criar a tarefa."),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor.")
     })
     @PostMapping
-    public ResponseEntity<TarefaResponseDTO> criarTarefa(
-            @Parameter(description = "Dados da nova tarefa a ser criada.") @RequestBody TarefaCreateDTO dto) {
-        return ResponseEntity.ok(tarefaService.criarTarefa(dto));
+    public ResponseEntity<TarefaResponseDTO> criarTarefa(@Valid @RequestBody TarefaCreateDTO dto) {
+        TarefaResponseDTO tarefaCriada = tarefaService.criarTarefa(dto);
+        URI location = URI.create("/api/tarefas/" + tarefaCriada.id()); // Define a URI do recurso criado
+        return ResponseEntity.created(location).body(tarefaCriada);
     }
 
     @Operation(summary = "Atualizar tarefa existente", description = "Atualiza os detalhes de uma tarefa existente.")
@@ -80,7 +82,7 @@ public class TarefaController {
     @PutMapping("/{id}")
     public ResponseEntity<TarefaResponseDTO> atualizarTarefa(
             @Parameter(description = "ID da tarefa a ser atualizada.") @PathVariable Long id,
-            @Parameter(description = "Dados para atualizar a tarefa.") @RequestBody TarefaUpdateDTO dto) {
+            @Valid @RequestBody TarefaUpdateDTO dto) {
         return ResponseEntity.ok(tarefaService.atualizarTarefa(id, dto));
     }
 
@@ -91,8 +93,7 @@ public class TarefaController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor.")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarTarefa(
-            @Parameter(description = "ID da tarefa a ser deletada.") @PathVariable Long id) {
+    public ResponseEntity<Void> deletarTarefa(@Parameter(description = "ID da tarefa a ser deletada.") @PathVariable Long id) {
         tarefaService.deletarTarefa(id);
         return ResponseEntity.noContent().build();
     }
