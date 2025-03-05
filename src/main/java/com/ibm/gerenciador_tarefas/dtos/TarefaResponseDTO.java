@@ -5,6 +5,7 @@ import com.ibm.gerenciador_tarefas.entities.Tarefa;
 import java.time.LocalDate;
 
 public record TarefaResponseDTO(
+
         Long id,
         String descricao,
         LocalDate dataInicio,
