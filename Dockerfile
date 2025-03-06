@@ -1,13 +1,17 @@
-FROM maven:3.9.8-eclipse-temurin-21-alpine AS builder
+FROM maven:3.9.8-eclipse-temurin-17-alpine AS builder
+
+WORKDIR /app
 
 COPY ./src src/
 COPY ./pom.xml pom.xml
 
-RUN mvn clean verify
+RUN mvn clean package
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:17-jre-alpine
 
-COPY --from=build /target/*.jar gerenciador-tarefas.jar
+WORKDIR /app
+
+COPY --from=builder /app/target/*.jar gerenciador-tarefas.jar
 
 EXPOSE 8080
 
