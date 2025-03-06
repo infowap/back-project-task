@@ -1,18 +1,16 @@
-FROM maven:3.9.8-eclipse-temurin-17-alpine AS builder
+FROM ubuntu:latest AS build
 
-WORKDIR /app
+RUN apt-get update
+RUN apt-get install openjdk-17-jdk -y
+COPY . .
 
-COPY ./src src/
-COPY ./pom.xml pom.xml
+RUN apt-get install maven -y
+RUN mvn clean install
 
-RUN mvn clean package
-
-FROM eclipse-temurin:17-jre-alpine
-
-WORKDIR /app
-
-COPY --from=builder /app/target/*.jar gerenciador-tarefas.jar
+FROM openjdk:17-jdk-slim
 
 EXPOSE 8080
+
+COPY --from=build /target/gerenciador-tarefas-0.0.1-SNAPSHOT.jar gerenciador-tarefas.jar
 
 ENTRYPOINT [ "java", "-jar", "gerenciador-tarefas.jar" ]
