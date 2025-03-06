@@ -1,16 +1,19 @@
-FROM ubuntu:25.04 AS build
+# Etapa 1: Construção da aplicação
+FROM maven:3.9.8-eclipse-temurin-17-alpine AS build
 
-RUN apt-get update
-RUN apt-get install openjdk-17-jdk -y
+WORKDIR /app
+
 COPY . .
 
-RUN apt-get install maven -y
-RUN mvn clean install
+RUN mvn clean package -DskipTests
 
-FROM openjdk:17-jdk-slim
+# Etapa 2: Imagem final
+FROM eclipse-temurin:17-jdk-slim
+
+WORKDIR /app
+
+COPY --from=build /app/target/gerenciador-tarefas-0.0.1-SNAPSHOT.jar gerenciador-tarefas.jar
 
 EXPOSE 8080
 
-COPY --from=build /target/gerenciador-tarefas-0.0.1-SNAPSHOT.jar gerenciador-tarefas.jar
-
-ENTRYPOINT [ "java", "-jar", "gerenciador-tarefas.jar" ]
+ENTRYPOINT ["java", "-jar", "gerenciador-tarefas.jar"]
