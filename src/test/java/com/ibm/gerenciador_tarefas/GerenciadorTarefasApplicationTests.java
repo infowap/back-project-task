@@ -8,6 +8,7 @@ class GerenciadorTarefasApplicationTests {
 
 	@Test
 	void contextLoads() {
+		GerenciadorTarefasApplication.main(new String[] {});
 	}
 
 }
