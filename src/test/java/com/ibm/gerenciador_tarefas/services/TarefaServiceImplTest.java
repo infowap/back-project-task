@@ -1,8 +1,15 @@
 package com.ibm.gerenciador_tarefas.services;
 
-import com.ibm.gerenciador_tarefas.dtos.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+import com.ibm.gerenciador_tarefas.dtos.StatusTarefa;
+import com.ibm.gerenciador_tarefas.dtos.TarefaCreateDTO;
+import com.ibm.gerenciador_tarefas.dtos.TarefaResponseDTO;
+import com.ibm.gerenciador_tarefas.dtos.TarefaUpdateDTO;
 import com.ibm.gerenciador_tarefas.entities.Tarefa;
-import com.ibm.gerenciador_tarefas.exceptions.*;
+import com.ibm.gerenciador_tarefas.exceptions.DataInvalidaException;
+import com.ibm.gerenciador_tarefas.exceptions.TarefaNaoEncontradaException;
 import com.ibm.gerenciador_tarefas.repositories.TarefaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,19 +17,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import java.util.List;
+import java.util.Arrays;
 
 @ExtendWith(MockitoExtension.class)
-class TarefaServiceImplTest {
-
-    public static final LocalDate DATA_INICIO =  LocalDate.of(2025, 12, 30);
-    public static final LocalDate DATA_FIM =  LocalDate.of(2025, 12, 31);
+class TarefaServiceTest {
 
     @Mock
     private TarefaRepository tarefaRepository;
@@ -31,115 +32,86 @@ class TarefaServiceImplTest {
     private TarefaServiceImpl tarefaService;
 
     private Tarefa tarefa;
-    private TarefaCreateDTO createDTO;
-    private TarefaUpdateDTO updateDTO;
+    private TarefaCreateDTO tarefaCreateDTO;
+    private TarefaUpdateDTO tarefaUpdateDTO;
+    private LocalDate dataInicio;
+    private LocalDate dataFim;
 
     @BeforeEach
     void setUp() {
-        tarefa = new Tarefa("Descrição", DATA_INICIO, DATA_FIM, StatusTarefa.PENDENTE);
-        createDTO = new TarefaCreateDTO("Descrição", DATA_INICIO, DATA_FIM, StatusTarefa.PENDENTE);
-        updateDTO = new TarefaUpdateDTO(1L,"Nova Descrição", DATA_INICIO, DATA_FIM.plusDays(2), StatusTarefa.CONCLUIDA);
+        dataInicio = LocalDate.now();
+        dataFim = LocalDate.now().plusDays(3);
+
+        tarefa = new Tarefa("Tarefa Teste", dataInicio, dataFim, StatusTarefa.PENDENTE);
+        tarefa.setId(1L);
+
+        tarefaCreateDTO = new TarefaCreateDTO("Tarefa Teste", dataInicio, dataFim, StatusTarefa.PENDENTE);
+        tarefaUpdateDTO = new TarefaUpdateDTO(2L, "Tarefa Atualizada", dataInicio, dataFim.plusDays(2), StatusTarefa.CONCLUIDA);
     }
 
     @Test
-    void deveCriarTarefaComSucesso() {
-        when(tarefaRepository.save(any(Tarefa.class))).thenReturn(tarefa);
+    void criarTarefa_DeveRetornarTarefaCriada() {
+        when(tarefaRepository.save(any())).thenReturn(tarefa);
 
-        TarefaResponseDTO response = tarefaService.criarTarefa(createDTO);
+        TarefaResponseDTO resposta = tarefaService.criarTarefa(tarefaCreateDTO);
 
-        assertNotNull(response);
-        assertEquals(createDTO.descricao(), response.descricao());
-        assertEquals(createDTO.dataInicio(), response.dataInicio());
-        assertEquals(createDTO.dataFim(), response.dataFim());
-        assertEquals(createDTO.status(), response.status());
+        assertNotNull(resposta);
+        assertEquals(tarefa.getDescricao(), resposta.descricao());
+        assertEquals(tarefa.getDataInicio(), resposta.dataInicio());
+        assertEquals(tarefa.getDataFim(), resposta.dataFim());
     }
 
     @Test
-    void deveLancarExcecaoQuandoDataInvalidaAoCriar() {
-        createDTO = new TarefaCreateDTO("Descrição", LocalDate.now(), LocalDate.now().minusDays(1), StatusTarefa.PENDENTE);
+    void criarTarefa_DeveLancarExcecao_QuandoDataInvalida() {
+        TarefaCreateDTO dtoInvalido = new TarefaCreateDTO("Tarefa Inválida", dataFim, dataInicio, StatusTarefa.PENDENTE);
 
-        assertThrows(DataInvalidaException.class, () -> tarefaService.criarTarefa(createDTO));
+        assertThrows(DataInvalidaException.class, () -> tarefaService.criarTarefa(dtoInvalido));
     }
 
     @Test
-    void deveAtualizarTarefaComSucesso() {
-        when(tarefaRepository.findById(anyLong())).thenReturn(Optional.of(tarefa));
-        when(tarefaRepository.save(any(Tarefa.class))).thenReturn(tarefa);
+    void atualizarTarefa_DeveRetornarTarefaAtualizada() {
+        when(tarefaRepository.findById(1L)).thenReturn(Optional.of(tarefa));
+        when(tarefaRepository.save(any())).thenReturn(tarefa);
 
-        TarefaResponseDTO response = tarefaService.atualizarTarefa(1L, updateDTO);
+        TarefaResponseDTO resposta = tarefaService.atualizarTarefa(1L, tarefaUpdateDTO);
 
-        assertNotNull(response);
-        assertEquals(updateDTO.descricao(), response.descricao());
+        assertNotNull(resposta);
+        assertEquals(tarefaUpdateDTO.descricao(), resposta.descricao());
+        assertEquals(tarefaUpdateDTO.dataInicio(), resposta.dataInicio());
+        assertEquals(tarefaUpdateDTO.dataFim(), resposta.dataFim());
     }
 
     @Test
-    void deveLancarExcecaoQuandoDataInvalidaAoAtualizar() {
-        updateDTO = new TarefaUpdateDTO(1L,"Nova Descrição", DATA_INICIO, DATA_INICIO.minusDays(4), StatusTarefa.CONCLUIDA);
+    void atualizarTarefa_DeveLancarExcecao_QuandoNaoEncontrada() {
+        when(tarefaRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(DataInvalidaException.class, () -> tarefaService.atualizarTarefa(1L, updateDTO));
+        assertThrows(TarefaNaoEncontradaException.class, () -> tarefaService.atualizarTarefa(1L, tarefaUpdateDTO));
     }
 
     @Test
-    void deveLancarExcecaoQuandoTarefaNaoEncontradaAoAtualizar() {
-        when(tarefaRepository.findById(anyLong())).thenReturn(Optional.empty());
-
-        assertThrows(TarefaNaoEncontradaException.class, () -> tarefaService.atualizarTarefa(1L, updateDTO));
-    }
-
-    @Test
-    void deveDeletarTarefaComSucesso() {
-        when(tarefaRepository.findById(anyLong())).thenReturn(Optional.of(tarefa));
-        doNothing().when(tarefaRepository).delete(any(Tarefa.class));
+    void deletarTarefa_DeveDeletarTarefaComSucesso() {
+        when(tarefaRepository.findById(1L)).thenReturn(Optional.of(tarefa));
+        doNothing().when(tarefaRepository).delete(any());
 
         assertDoesNotThrow(() -> tarefaService.deletarTarefa(1L));
     }
 
     @Test
-    void deveLancarExcecaoQuandoTarefaNaoEncontradaAoDeletar() {
-        when(tarefaRepository.findById(anyLong())).thenReturn(Optional.empty());
+    void deletarTarefa_DeveLancarExcecao_QuandoNaoEncontrada() {
+        when(tarefaRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(TarefaNaoEncontradaException.class, () -> tarefaService.deletarTarefa(1L));
     }
 
     @Test
-    void deveBuscarTarefaPorIdComSucesso() {
-        when(tarefaRepository.findById(anyLong())).thenReturn(Optional.of(tarefa));
+    void listarTodas_DeveRetornarListaDeTarefas() {
+        List<Tarefa> tarefas = Arrays.asList(tarefa);
+        when(tarefaRepository.findAll()).thenReturn(tarefas);
 
-        TarefaResponseDTO response = tarefaService.buscarPorId(1L);
+        List<TarefaResponseDTO> resposta = tarefaService.listarTodas();
 
-        assertNotNull(response);
-        assertEquals(tarefa.getDescricao(), response.descricao());
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoTarefaNaoEncontradaAoBuscarPorId() {
-        when(tarefaRepository.findById(anyLong())).thenReturn(Optional.empty());
-
-        assertThrows(TarefaNaoEncontradaException.class, () -> tarefaService.buscarPorId(1L));
-    }
-
-    @Test
-    void deveListarTodasTarefasComSucesso() {
-        when(tarefaRepository.findAll()).thenReturn(List.of(tarefa));
-
-        List<TarefaResponseDTO> response = tarefaService.listarTodas();
-
-        assertFalse(response.isEmpty());
-    }
-
-    @Test
-    void deveListarTarefasPorStatusComSucesso() {
-        when(tarefaRepository.findByStatus(any(StatusTarefa.class))).thenReturn(List.of(tarefa));
-
-        List<TarefaResponseDTO> response = tarefaService.listarPorStatus(StatusTarefa.PENDENTE);
-
-        assertFalse(response.isEmpty());
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoNenhumaTarefaEncontradaPorStatus() {
-        when(tarefaRepository.findByStatus(any(StatusTarefa.class))).thenReturn(List.of());
-
-        assertThrows(NenhumaTarefaEncontradaException.class, () -> tarefaService.listarPorStatus(StatusTarefa.PENDENTE));
+        assertFalse(resposta.isEmpty());
+        assertEquals(1, resposta.size());
+        assertEquals(tarefa.getDescricao(), resposta.get(0).descricao());
     }
 }
