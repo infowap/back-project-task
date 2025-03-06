@@ -1,4 +1,6 @@
+src/main/resources/application-secrets.properties
 HELP.md
+src/main/java/com/ibm/gerenciador_tarefas/config/SecretsConfig.java
 data/
 target/
 !.mvn/wrapper/maven-wrapper.jar
