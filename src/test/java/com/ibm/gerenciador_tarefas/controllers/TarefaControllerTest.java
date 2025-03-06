@@ -86,7 +86,7 @@ class TarefaControllerTest {
         mockMvc.perform(post("/api/tarefas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(novaTarefa)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(3L))
                 .andExpect(jsonPath("$.descricao").value("Nova Tarefa"));
     }
