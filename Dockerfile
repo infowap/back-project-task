@@ -5,7 +5,7 @@ COPY ./pom.xml pom.xml
 
 RUN mvn clean verify
 
-FROM eclipse-temurin-17-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 COPY --from=build /target/*.jar gerenciador-tarefas.jar
 
