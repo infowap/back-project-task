@@ -7,8 +7,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
-    @Value("${CROSCONFIG}")
-    private String url;
+    
+    private String url = System.getenv("CROSCONFIG");
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
