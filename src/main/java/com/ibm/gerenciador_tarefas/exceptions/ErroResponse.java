@@ -1,10 +1,8 @@
 package com.ibm.gerenciador_tarefas.exceptions;
 
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
+
 public class ErroResponse {
 
         private LocalDateTime timestamp;
@@ -21,5 +19,24 @@ public class ErroResponse {
             this.path = path;
         }
 
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getPath() {
+        return path;
+    }
 }
 
